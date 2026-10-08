@@ -16,6 +16,7 @@ interface ChatSession {
   id: string;
   title: string;
   messages: Message[];
+  updatedAt?: number;
 }
 
 export default function App() {
@@ -24,7 +25,7 @@ export default function App() {
   const [userEmail, setUserEmail] = useState<string | null>(localStorage.getItem('coron_user'));
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [sessions, setSessions] = useState<ChatSession[]>([
-    { id: '1', title: 'New Conversation', messages: [] }
+    { id: '1', title: 'New Conversation', messages: [], updatedAt: Date.now() }
   ]);
   const [activeSessionId, setActiveSessionId] = useState('1');
   const [chatSearchQuery, setChatSearchQuery] = useState('');
@@ -146,6 +147,7 @@ export default function App() {
       id: Date.now().toString(),
       title: 'New Conversation',
       messages: [],
+      updatedAt: Date.now(),
     };
     setSessions((prev) => [newSession, ...prev]);
     setActiveSessionId(newSession.id);
@@ -156,7 +158,7 @@ export default function App() {
     e.stopPropagation();
     const updated = sessions.filter((s) => s.id !== sessionId);
     if (updated.length === 0) {
-      const fresh: ChatSession = { id: Date.now().toString(), title: 'New Conversation', messages: [] };
+      const fresh: ChatSession = { id: Date.now().toString(), title: 'New Conversation', messages: [], updatedAt: Date.now() };
       setSessions([fresh]);
       setActiveSessionId(fresh.id);
     } else {
@@ -252,6 +254,7 @@ export default function App() {
             ...s,
             title: s.messages.length === 0 ? (artPrompt.slice(0, 30) + '...') : s.title,
             messages: finalMessages,
+            updatedAt: Date.now(), // Refresh timestamp on activity
           };
         })
       );
@@ -268,6 +271,7 @@ export default function App() {
           ...s,
           title: s.messages.length === 0 ? (promptText ? promptText.slice(0, 30) + '...' : 'Media Analysis') : s.title,
           messages: messagesWithPlaceholder,
+          updatedAt: Date.now(), // Refresh timestamp on activity
         };
       })
     );
@@ -319,7 +323,7 @@ export default function App() {
                     if (msgs.length > 0) {
                       msgs[msgs.length - 1] = { role: 'assistant', content: accumulated };
                     }
-                    return { ...s, messages: msgs };
+                    return { ...s, messages: msgs, updatedAt: Date.now() };
                   })
                 );
               }
@@ -339,7 +343,7 @@ export default function App() {
               content: '⚠️ Connection Error: Could not reach the CORON neural service.',
             };
           }
-          return { ...s, messages: msgs };
+          return { ...s, messages: msgs, updatedAt: Date.now() };
         })
       );
     } finally {
@@ -910,7 +914,7 @@ export default function App() {
                         )}
                       </div>
 
-                      {/* Action buttons toolbar below message bubble - completely separate from text */}
+                      {/* Action buttons toolbar below message bubble */}
                       {!isEditing && msg.content && (
                         <div className={`flex items-center gap-2 opacity-0 group-hover:opacity-100 transition px-1 text-xs ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <button
