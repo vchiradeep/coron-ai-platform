@@ -483,6 +483,7 @@ export default function App() {
           </button>
         </header>
 
+        {/* HERO SECTION */}
         <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold mb-6 animate-bounce">
             <span>✨</span> Next-Generation Autonomous Intelligence
@@ -507,6 +508,66 @@ export default function App() {
               <div className="text-4xl md:text-5xl font-extrabold text-cyan-400 mb-2 font-mono">{statPrecision}%</div>
               <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Contextual Reasoning Accuracy</div>
             </div>
+          </div>
+        </section>
+
+        {/* CORE PLATFORM CAPABILITIES SECTION */}
+        <section className="max-w-6xl mx-auto px-6 py-16 relative z-10 border-t border-slate-800/80">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Engineered for Limitless Power</h2>
+            <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">Built from the ground up to empower developers, researchers, and creators with unmatched neural capabilities.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-blue-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-blue-500/10 rounded-2xl w-fit group-hover:scale-110 transition">💻</div>
+              <h3 className="text-lg font-bold text-white mb-2">Autonomous Code Expert</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Generate pristine code across React, Node, TypeScript, and Python complete with formatted dark code blocks and instant copy tools.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-indigo-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-indigo-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🔍</div>
+              <h3 className="text-lg font-bold text-white mb-2">Live Web Research</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Toggle live web search grounding powered by Tavily to retrieve real-time facts, documentation, and web data instantly.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-cyan-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-cyan-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🎨</div>
+              <h3 className="text-lg font-bold text-white mb-2">Neural Image Studio</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Generate 4K creative artwork, design prototypes, and visual assets seamlessly through intuitive prompt commands.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-violet-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-violet-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🎙️</div>
+              <h3 className="text-lg font-bold text-white mb-2">Live Voice Mode</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Experience immersive, hands-free multilingual speech interactions with synthesized neural voice feedback.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-emerald-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-emerald-500/10 rounded-2xl w-fit group-hover:scale-110 transition">⚡</div>
+              <h3 className="text-lg font-bold text-white mb-2">Streaming Chat Engine</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Experience blazing fast token streaming with markdown tables, rich inline formatting, and infinite chat history.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-amber-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-amber-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🔒</div>
+              <h3 className="text-lg font-bold text-white mb-2">Enterprise Security</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Secured with Firebase Auth, Firestore encrypted storage, and robust CORS token validation protocols.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ARCHITECTURE SECTION */}
+        <section className="max-w-5xl mx-auto px-6 py-16 relative z-10 border-t border-slate-800/80 mb-12">
+          <div className="p-10 rounded-3xl bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-slate-900/40 border border-slate-800 backdrop-blur-xl text-center">
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-4">Ready to Experience CORON?</h2>
+            <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto mb-8">Jump back into your workspace and start building, researching, and creating with your personal AI assistant.</p>
+            <button
+              onClick={() => window.close()}
+              className="px-8 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-blue-500/25 transition cursor-pointer"
+            >
+              Return to Workspace →
+            </button>
           </div>
         </section>
 
