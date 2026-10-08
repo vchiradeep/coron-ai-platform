@@ -827,7 +827,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="max-w-6xl mx-auto space-y-6 w-full overflow-x-hidden">
+            <div className="max-w-6xl mx-auto space-y-6 w-full overflow-x-hidden pb-8">
               {isLoadingMore && (
                 <div className="text-center py-2">
                   <span className="inline-block px-3 py-1 bg-white/85 backdrop-blur-md rounded-full shadow-sm text-xs font-medium text-slate-500 animate-pulse">
@@ -840,79 +840,82 @@ export default function App() {
                 const isEditing = editingIndex === realIndex;
 
                 return (
-                  <div key={realIndex} className={`flex gap-3 md:gap-4 group w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div key={realIndex} className={`flex gap-3 md:gap-4 group w-full mb-6 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
                       <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0 mt-1 shadow-md shadow-blue-500/30">
                         C
                       </div>
                     )}
-                    <div
-                      className={`max-w-[92%] md:max-w-5xl px-6 py-4 rounded-2xl text-sm shadow-md relative break-words overflow-hidden ${
-                        msg.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none shadow-blue-500/25'
-                          : 'bg-white/95 backdrop-blur-xl text-slate-800 border border-white rounded-bl-none shadow-slate-200/60 w-full'
-                      }`}
-                    >
-                      {msg.attachment && msg.attachment.type.startsWith('image/') && (
-                        <div className="mb-3">
-                          <img src={msg.attachment.url} alt="Uploaded attachment" className="max-h-60 rounded-xl object-contain border border-white/20 shadow-sm" />
-                        </div>
-                      )}
+                    <div className="flex flex-col gap-2 max-w-[92%] md:max-w-5xl">
+                      <div
+                        className={`px-6 py-4 rounded-2xl text-sm shadow-md break-words ${
+                          msg.role === 'user'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none shadow-blue-500/25'
+                            : 'bg-white/95 backdrop-blur-xl text-slate-800 border border-white rounded-bl-none shadow-slate-200/60 w-full'
+                        }`}
+                      >
+                        {msg.attachment && msg.attachment.type.startsWith('image/') && (
+                          <div className="mb-3">
+                            <img src={msg.attachment.url} alt="Uploaded attachment" className="max-h-60 rounded-xl object-contain border border-white/20 shadow-sm" />
+                          </div>
+                        )}
 
-                      {isEditing ? (
-                        <div className="space-y-3">
-                          <textarea
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            rows={3}
-                            className="w-full bg-slate-900 text-white p-3 rounded-xl text-sm focus:outline-none border border-slate-700"
-                          />
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleSaveEdit(realIndex)}
-                              className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition cursor-pointer"
-                            >
-                              Save & Submit
-                            </button>
-                            <button
-                              onClick={() => setEditingIndex(null)}
-                              className="px-4 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs transition cursor-pointer"
-                            >
-                              Cancel
-                            </button>
+                        {isEditing ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              rows={3}
+                              className="w-full bg-slate-900 text-white p-3 rounded-xl text-sm focus:outline-none border border-slate-700"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleSaveEdit(realIndex)}
+                                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition cursor-pointer"
+                              >
+                                Save & Submit
+                              </button>
+                              <button
+                                onClick={() => setEditingIndex(null)}
+                                className="px-4 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs transition cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ) : msg.imageUrl ? (
-                        <div className="space-y-3">
-                          <p className="font-medium text-slate-800">{parseInlineFormatting(msg.content)}</p>
-                          <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-900 inline-block max-w-full">
-                            <img src={msg.imageUrl} alt="Generated AI Artwork" className="max-h-[450px] w-auto object-contain mx-auto" />
+                        ) : msg.imageUrl ? (
+                          <div className="space-y-3">
+                            <p className="font-medium text-slate-800">{parseInlineFormatting(msg.content)}</p>
+                            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-900 inline-block max-w-full">
+                              <img src={msg.imageUrl} alt="Generated AI Artwork" className="max-h-[450px] w-auto object-contain mx-auto" />
+                            </div>
+                            <div className="flex items-center gap-2 pt-1">
+                              <a
+                                href={msg.imageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <span>📥</span> Download Image
+                              </a>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 pt-1">
-                            <a
-                              href={msg.imageUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <span>📥</span> Download Image
-                            </a>
-                          </div>
-                        </div>
-                      ) : msg.content ? (
-                        renderFormattedContent(msg.content)
-                      ) : (
-                        <span className="animate-pulse text-slate-400 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
-                          CORON is thinking...
-                        </span>
-                      )}
+                        ) : msg.content ? (
+                          renderFormattedContent(msg.content)
+                        ) : (
+                          <span className="animate-pulse text-slate-400 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
+                            CORON is thinking...
+                          </span>
+                        )}
+                      </div>
 
+                      {/* Action buttons toolbar below message bubble - completely separate from text */}
                       {!isEditing && msg.content && (
-                        <div className={`absolute -bottom-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm text-xs ${msg.role === 'user' ? 'left-2' : 'right-2'}`}>
+                        <div className={`flex items-center gap-2 opacity-0 group-hover:opacity-100 transition px-1 text-xs ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <button
                             onClick={() => handleCopyText(msg.content)}
-                            className="text-slate-600 hover:text-blue-600 transition cursor-pointer font-medium flex items-center gap-1"
+                            className="text-slate-600 hover:text-blue-600 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm transition cursor-pointer font-medium flex items-center gap-1"
                             title="Copy message"
                           >
                             <span>📋</span> Copy
@@ -923,7 +926,7 @@ export default function App() {
                                 setEditingIndex(realIndex);
                                 setEditText(msg.content);
                               }}
-                              className="text-slate-600 hover:text-indigo-600 transition cursor-pointer font-medium flex items-center gap-1 border-l border-slate-200 pl-2"
+                              className="text-slate-600 hover:text-indigo-600 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm transition cursor-pointer font-medium flex items-center gap-1"
                               title="Edit message"
                             >
                               <span>✏️</span> Edit
