@@ -21,17 +21,33 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Initialize Firebase Admin SDK
-const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json';
+// Initialize Firebase Admin SDK with robust multi-path fallback for Render & Local
+const possibleKeyPaths = [
+  process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+  path.resolve(process.cwd(), 'serviceAccountKey.json'),
+  path.resolve(__dirname, '../serviceAccountKey.json'),
+  path.resolve(__dirname, 'serviceAccountKey.json'),
+  './serviceAccountKey.json',
+  '../serviceAccountKey.json'
+].filter(Boolean) as string[];
 
-if (fs.existsSync(path.resolve(serviceAccountPath))) {
-  const serviceAccount = JSON.parse(fs.readFileSync(path.resolve(serviceAccountPath), 'utf8'));
+let resolvedKeyPath: string | null = null;
+for (const p of possibleKeyPaths) {
+  const resolved = path.resolve(p);
+  if (fs.existsSync(resolved)) {
+    resolvedKeyPath = resolved;
+    break;
+  }
+}
+
+if (resolvedKeyPath) {
+  const serviceAccount = JSON.parse(fs.readFileSync(resolvedKeyPath, 'utf8'));
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
-  console.log('Firebase Admin initialized successfully.');
+  console.log(`Firebase Admin initialized successfully using key at: ${resolvedKeyPath}`);
 } else {
-  console.error('Firebase service account key not found! Please check your path.');
+  console.error('CRITICAL ERROR: Firebase service account key not found in any expected path!');
 }
 
 const db = admin.firestore();
