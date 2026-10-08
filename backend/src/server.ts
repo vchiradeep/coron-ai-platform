@@ -3,6 +3,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import admin from 'firebase-admin';
+import fs from 'fs';
+import path from 'path';
 import chatRouter from './routes/chat';
 import ttsRoutes from './routes/tts';
 import authRouter from './routes/auth';
@@ -15,7 +17,7 @@ const port = process.env.PORT || 5000;
 // Explicit CORS configuration and preflight handling
 const corsOptions = {
   origin: [
-    'https://coron-ai.vercel.app',
+    'https://coron-ai-platform.vercel.app',
     /^https:\/\/coron-ai.*\.vercel\.app$/, // Allows any Vercel preview URLs
     'http://localhost:5173',
     'http://localhost:3000'
@@ -32,9 +34,10 @@ app.options('*', cors(corsOptions)); // Handle browser preflight checks
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Initialize Firebase Admin SDK cleanly via Environment Variable JSON string
+// Initialize Firebase Admin SDK (Supports both Render Env Var & Local serviceAccountKey.json)
 if (!admin.apps.length) {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const localKeyPath = path.join(__dirname, '../serviceAccountKey.json');
 
   if (serviceAccountJson) {
     try {
@@ -46,16 +49,28 @@ if (!admin.apps.length) {
     } catch (error) {
       console.error('CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', error);
     }
+  } else if (fs.existsSync(localKeyPath)) {
+    try {
+      const serviceAccount = JSON.parse(fs.readFileSync(localKeyPath, 'utf8'));
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      console.log('Firebase Admin initialized successfully via local serviceAccountKey.json.');
+    } catch (error) {
+      console.error('CRITICAL ERROR: Failed to parse local serviceAccountKey.json:', error);
+    }
   } else {
-    console.error('CRITICAL ERROR: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is missing!');
+    console.error('CRITICAL ERROR: Firebase credentials missing! Neither FIREBASE_SERVICE_ACCOUNT_JSON nor serviceAccountKey.json was found.');
   }
 }
 
-const db = admin.firestore();
+// Safely instantiate firestore after initialization check
+const db = admin.apps.length ? admin.firestore() : null;
 
 // Health Check Route
 app.get('/health', async (req: Request, res: Response) => {
   try {
+    if (!db) throw new Error('Firestore not initialized');
     const testRef = db.collection('system_health').doc('ping');
     await testRef.set({ lastChecked: admin.firestore.FieldValue.serverTimestamp() });
     const doc = await testRef.get();

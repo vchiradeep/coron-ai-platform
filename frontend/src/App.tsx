@@ -22,7 +22,7 @@ export default function App() {
   const isAboutPage = new URLSearchParams(window.location.search).get('about') === 'true';
 
   const [userEmail, setUserEmail] = useState<string | null>(localStorage.getItem('coron_user'));
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [sessions, setSessions] = useState<ChatSession[]>([
     { id: '1', title: 'New Conversation', messages: [] }
   ]);
@@ -49,6 +49,32 @@ export default function App() {
   const [statLanguages, setStatLanguages] = useState(0);
   const [statSpeed, setStatSpeed] = useState(0);
   const [statPrecision, setStatPrecision] = useState(0);
+
+  // Fetch chat sessions from Firebase/Backend on login
+  useEffect(() => {
+    if (userEmail) {
+      fetch(`${API_BASE}/api/chat/sessions?email=${encodeURIComponent(userEmail)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.sessions && data.sessions.length > 0) {
+            setSessions(data.sessions);
+            setActiveSessionId(data.sessions[0].id);
+          }
+        })
+        .catch((err) => console.error('Failed to load cloud chat sessions:', err));
+    }
+  }, [userEmail]);
+
+  // Save chat sessions to cloud on update
+  useEffect(() => {
+    if (userEmail && sessions.length > 0) {
+      fetch(`${API_BASE}/api/chat/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail, sessions }),
+      }).catch((err) => console.error('Failed to sync sessions to cloud:', err));
+    }
+  }, [sessions, userEmail]);
 
   useEffect(() => {
     if (isAboutPage) {
@@ -123,6 +149,7 @@ export default function App() {
     };
     setSessions((prev) => [newSession, ...prev]);
     setActiveSessionId(newSession.id);
+    if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
   const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
@@ -354,7 +381,7 @@ export default function App() {
     });
 
     return (
-      <div key={key} className="my-4 overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white">
+      <div key={key} className="my-4 overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white max-w-full">
         <table className="w-full text-left border-collapse text-xs md:text-sm">
           <thead>
             <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 font-bold">
@@ -387,7 +414,7 @@ export default function App() {
         const codeContent = part.slice(firstLineEnd + 1, -3).trim();
 
         return (
-          <div key={index} className="my-4 rounded-xl overflow-hidden border border-slate-700 bg-[#1e1e2e] text-slate-100 shadow-2xl">
+          <div key={index} className="my-4 rounded-xl overflow-hidden border border-slate-700 bg-[#1e1e2e] text-slate-100 shadow-2xl max-w-full">
             <div className="flex items-center justify-between px-4 py-2.5 bg-[#181825] border-b border-slate-800 text-xs font-mono text-slate-400">
               <span className="uppercase tracking-wider font-semibold text-blue-400">{language}</span>
               <button
@@ -431,7 +458,7 @@ export default function App() {
             renderedElements.push(<h2 key={lineIdx} className="text-lg md:text-xl font-bold text-slate-900 mt-5 mb-2">{parseInlineFormatting(trimmed.replace('## ', ''))}</h2>);
           } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
             renderedElements.push(
-              <div key={lineIdx} className="flex items-start gap-2 pl-2">
+              <div key={lineIdx} className="flex items-start gap-2 pl-2 break-words">
                 <span className="text-blue-600 font-bold mt-0.5">•</span>
                 <span className="flex-1">{parseInlineFormatting(trimmed.slice(2))}</span>
               </div>
@@ -440,21 +467,21 @@ export default function App() {
             const match = trimmed.match(/^(\d+)\.\s(.*)$/);
             if (match) {
               renderedElements.push(
-                <div key={lineIdx} className="flex items-start gap-2 pl-2">
+                <div key={lineIdx} className="flex items-start gap-2 pl-2 break-words">
                   <span className="text-blue-600 font-bold shrink-0">{match[1]}.</span>
                   <span className="flex-1">{parseInlineFormatting(match[2])}</span>
                 </div>
               );
             }
           } else {
-            renderedElements.push(<p key={lineIdx} className="text-slate-800">{parseInlineFormatting(trimmed)}</p>);
+            renderedElements.push(<p key={lineIdx} className="text-slate-800 break-words">{parseInlineFormatting(trimmed)}</p>);
           }
         }
       });
 
       flushTable('table-end');
 
-      return <div key={index} className="space-y-2 leading-relaxed">{renderedElements}</div>;
+      return <div key={index} className="space-y-2 leading-relaxed break-words">{renderedElements}</div>;
     });
   };
 
@@ -464,11 +491,11 @@ export default function App() {
 
   if (isAboutPage) {
     return (
-      <div className="h-screen w-full bg-slate-950 text-white font-sans selection:bg-blue-500 selection:text-white flex flex-col overflow-hidden relative">
+      <div className="fixed inset-0 w-screen h-screen overflow-y-auto bg-slate-950 text-white font-sans selection:bg-blue-500 selection:text-white scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[140px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] rounded-full bg-indigo-600/20 blur-[140px] pointer-events-none" />
 
-        <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-5 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 flex-shrink-0">
+        <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-5 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
           <div className="flex items-center gap-3">
             <img src="/coron-logo.png" alt="CORON Logo" className="w-9 h-9 object-contain rounded-xl shadow-lg shadow-blue-500/30 animate-pulse" />
             <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent">
@@ -483,100 +510,97 @@ export default function App() {
           </button>
         </header>
 
-        {/* SCROLLABLE CONTENT CONTAINER */}
-        <div className="flex-1 overflow-y-auto relative z-10">
-          {/* HERO SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold mb-6 animate-bounce">
-              <span>✨</span> Next-Generation Autonomous Intelligence
+        {/* HERO SECTION */}
+        <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold mb-6 animate-bounce">
+            <span>✨</span> Next-Generation Autonomous Intelligence
+          </div>
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+            One AI. <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent">Every Task.</span>
+          </h1>
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed mb-12">
+            CORON is an elite, multi-modal neural platform engineered to seamlessly handle deep code generation, live web research, high-end creative media, and universal multilingual voice interactions.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-4">
+            <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-blue-500/50 transition">
+              <div className="text-4xl md:text-5xl font-extrabold text-blue-400 mb-2 font-mono">{statLanguages}+</div>
+              <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Global & Regional Languages</div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
-              One AI. <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent">Every Task.</span>
-            </h1>
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed mb-12">
-              CORON is an elite, multi-modal neural platform engineered to seamlessly handle deep code generation, live web research, high-end creative media, and universal multilingual voice interactions.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-4">
-              <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-blue-500/50 transition">
-                <div className="text-4xl md:text-5xl font-extrabold text-blue-400 mb-2 font-mono">{statLanguages}+</div>
-                <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Global & Regional Languages</div>
-              </div>
-              <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-indigo-500/50 transition">
-                <div className="text-4xl md:text-5xl font-extrabold text-indigo-400 mb-2 font-mono">{statSpeed} <span className="text-xl">tok/s</span></div>
-                <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Ultra-Fast Neural Response</div>
-              </div>
-              <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-cyan-500/50 transition">
-                <div className="text-4xl md:text-5xl font-extrabold text-cyan-400 mb-2 font-mono">{statPrecision}%</div>
-                <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Contextual Reasoning Accuracy</div>
-              </div>
+            <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-indigo-500/50 transition">
+              <div className="text-4xl md:text-5xl font-extrabold text-indigo-400 mb-2 font-mono">{statSpeed} <span className="text-xl">tok/s</span></div>
+              <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Ultra-Fast Neural Response</div>
             </div>
-          </section>
+            <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-cyan-500/50 transition">
+              <div className="text-4xl md:text-5xl font-extrabold text-cyan-400 mb-2 font-mono">{statPrecision}%</div>
+              <div className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Contextual Reasoning Accuracy</div>
+            </div>
+          </div>
+        </section>
 
-          {/* CORE PLATFORM CAPABILITIES SECTION */}
-          <section className="max-w-6xl mx-auto px-6 py-16 border-t border-slate-800/80">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Engineered for Limitless Power</h2>
-              <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">Built from the ground up to empower developers, researchers, and creators with unmatched neural capabilities.</p>
+        {/* CORE PLATFORM CAPABILITIES SECTION */}
+        <section className="max-w-6xl mx-auto px-6 py-16 relative z-10 border-t border-slate-800/80">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Engineered for Limitless Power</h2>
+            <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">Built from the ground up to empower developers, researchers, and creators with unmatched neural capabilities.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-blue-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-blue-500/10 rounded-2xl w-fit group-hover:scale-110 transition">💻</div>
+              <h3 className="text-lg font-bold text-white mb-2">Autonomous Code Expert</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Generate pristine code across React, Node, TypeScript, and Python complete with formatted dark code blocks and instant copy tools.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-blue-500/50 transition group">
-                <div className="text-3xl mb-4 p-3 bg-blue-500/10 rounded-2xl w-fit group-hover:scale-110 transition">💻</div>
-                <h3 className="text-lg font-bold text-white mb-2">Autonomous Code Expert</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Generate pristine code across React, Node, TypeScript, and Python complete with formatted dark code blocks and instant copy tools.</p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-indigo-500/50 transition group">
-                <div className="text-3xl mb-4 p-3 bg-indigo-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🔍</div>
-                <h3 className="text-lg font-bold text-white mb-2">Live Web Research</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Toggle live web search grounding powered by Tavily to retrieve real-time facts, documentation, and web data instantly.</p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-cyan-500/50 transition group">
-                <div className="text-3xl mb-4 p-3 bg-cyan-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🎨</div>
-                <h3 className="text-lg font-bold text-white mb-2">Neural Image Studio</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Generate 4K creative artwork, design prototypes, and visual assets seamlessly through intuitive prompt commands.</p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-violet-500/50 transition group">
-                <div className="text-3xl mb-4 p-3 bg-violet-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🎙️</div>
-                <h3 className="text-lg font-bold text-white mb-2">Live Voice Mode</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Experience immersive, hands-free multilingual speech interactions with synthesized neural voice feedback.</p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-emerald-500/50 transition group">
-                <div className="text-3xl mb-4 p-3 bg-emerald-500/10 rounded-2xl w-fit group-hover:scale-110 transition">⚡</div>
-                <h3 className="text-lg font-bold text-white mb-2">Streaming Chat Engine</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Experience blazing fast token streaming with markdown tables, rich inline formatting, and infinite chat history.</p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-amber-500/50 transition group">
-                <div className="text-3xl mb-4 p-3 bg-amber-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🔒</div>
-                <h3 className="text-lg font-bold text-white mb-2">Enterprise Security</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Secured with Firebase Auth, Firestore encrypted storage, and robust CORS token validation protocols.</p>
-              </div>
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-indigo-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-indigo-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🔍</div>
+              <h3 className="text-lg font-bold text-white mb-2">Live Web Research</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Toggle live web search grounding powered by Tavily to retrieve real-time facts, documentation, and web data instantly.</p>
             </div>
-          </section>
 
-          {/* ARCHITECTURE SECTION */}
-          <section className="max-w-5xl mx-auto px-6 py-16 border-t border-slate-800/80 mb-12">
-            <div className="p-10 rounded-3xl bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-slate-900/40 border border-slate-800 backdrop-blur-xl text-center">
-              <h2 className="text-2xl md:text-3xl font-extrabold mb-4">Ready to Experience CORON?</h2>
-              <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto mb-8">Jump back into your workspace and start building, researching, and creating with your personal AI assistant.</p>
-              <button
-                onClick={() => window.close()}
-                className="px-8 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-blue-500/25 transition cursor-pointer"
-              >
-                Return to Workspace →
-              </button>
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-cyan-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-cyan-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🎨</div>
+              <h3 className="text-lg font-bold text-white mb-2">Neural Image Studio</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Generate 4K creative artwork, design prototypes, and visual assets seamlessly through intuitive prompt commands.</p>
             </div>
-          </section>
 
-          <footer className="border-t border-slate-800 py-8 text-center text-xs text-slate-500 font-medium">
-            CORON – One AI. Every Task • Powered by Autonomous Neural Engine
-          </footer>
-        </div>
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-violet-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-violet-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🎙️</div>
+              <h3 className="text-lg font-bold text-white mb-2">Live Voice Mode</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Experience immersive, hands-free multilingual speech interactions with synthesized neural voice feedback.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-emerald-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-emerald-500/10 rounded-2xl w-fit group-hover:scale-110 transition">⚡</div>
+              <h3 className="text-lg font-bold text-white mb-2">Streaming Chat Engine</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Experience blazing fast token streaming with markdown tables, rich inline formatting, and infinite chat history.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 backdrop-blur-xl hover:border-amber-500/50 transition group">
+              <div className="text-3xl mb-4 p-3 bg-amber-500/10 rounded-2xl w-fit group-hover:scale-110 transition">🔒</div>
+              <h3 className="text-lg font-bold text-white mb-2">Enterprise Security</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Secured with Firebase Auth, Firestore encrypted storage, and robust CORS token validation protocols.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ARCHITECTURE SECTION */}
+        <section className="max-w-5xl mx-auto px-6 py-16 relative z-10 border-t border-slate-800/80 mb-12">
+          <div className="p-10 rounded-3xl bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-slate-900/40 border border-slate-800 backdrop-blur-xl text-center">
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-4">Ready to Experience CORON?</h2>
+            <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto mb-8">Jump back into your workspace and start building, researching, and creating with your personal AI assistant.</p>
+            <button
+              onClick={() => window.close()}
+              className="px-8 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-blue-500/25 transition cursor-pointer"
+            >
+              Return to Workspace →
+            </button>
+          </div>
+        </section>
+
+        <footer className="border-t border-slate-800 py-8 text-center text-xs text-slate-500 font-medium relative z-10">
+          CORON – One AI. Every Task • Powered by Autonomous Neural Engine
+        </footer>
       </div>
     );
   }
@@ -586,10 +610,18 @@ export default function App() {
       <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-400/20 blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-orange-400/20 blur-3xl pointer-events-none" />
 
+      {/* MOBILE SIDEBAR BACKDROP */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/40 z-30 md:hidden backdrop-blur-xs transition-opacity"
+        />
+      )}
+
       {/* SIDEBAR */}
       <aside
-        className={`h-full bg-white/90 backdrop-blur-xl border-r border-slate-200/80 shadow-xl flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden z-20 ${
-          sidebarOpen ? 'w-72' : 'w-0 border-r-0'
+        className={`fixed md:relative inset-y-0 left-0 z-40 bg-white/95 md:bg-white/90 backdrop-blur-xl border-r border-slate-200/80 shadow-2xl md:shadow-xl flex flex-col flex-shrink-0 transition-transform duration-300 ease-in-out overflow-hidden ${
+          sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0 md:w-0 md:border-r-0'
         }`}
       >
         <div className="p-4 flex items-center justify-between border-b border-slate-200/50 flex-shrink-0 w-72">
@@ -637,7 +669,10 @@ export default function App() {
             filteredSessions.map((session) => (
               <div
                 key={session.id}
-                onClick={() => setActiveSessionId(session.id)}
+                onClick={() => {
+                  setActiveSessionId(session.id);
+                  if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
                 className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition cursor-pointer ${
                   session.id === activeSessionId
                     ? 'bg-blue-500/10 text-blue-700 font-medium border border-blue-200'
@@ -686,15 +721,13 @@ export default function App() {
         
         <header className="h-14 flex-shrink-0 z-30 flex items-center justify-between px-4 md:px-6 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
           <div className="flex items-center gap-3">
-            {!sidebarOpen && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                title="Open Sidebar"
-              >
-                ☰
-              </button>
-            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+              title="Toggle Sidebar"
+            >
+              ☰
+            </button>
             <div className="flex items-center gap-2.5">
               <img src="/coron-logo.png" alt="CORON Logo" className="w-6 h-6 object-contain" />
               <div className="flex items-baseline gap-2">
@@ -704,10 +737,10 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => window.open(window.location.origin + window.location.pathname + '?about=true', '_blank')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-md shadow-blue-500/20 transition cursor-pointer animate-pulse"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-md shadow-blue-500/20 transition cursor-pointer animate-pulse"
               title="Learn about CORON"
             >
               <span>✨</span>
@@ -716,7 +749,7 @@ export default function App() {
 
             <button
               onClick={() => setIsVoiceModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-500/20 transition cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-500/20 transition cursor-pointer"
               title="Open Live Voice Mode"
             >
               <span>🎙️</span>
@@ -725,7 +758,7 @@ export default function App() {
 
             <button
               onClick={() => setWebSearchEnabled(!webSearchEnabled)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer shadow-sm ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer shadow-sm ${
                 webSearchEnabled
                   ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20'
                   : 'bg-white/80 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -733,7 +766,7 @@ export default function App() {
               title="Toggle Live Web Search Grounding"
             >
               <span>🔍</span>
-              <span className="hidden sm:inline">Web Search: {webSearchEnabled ? 'ON' : 'OFF'}</span>
+              <span className="hidden sm:inline">Search: {webSearchEnabled ? 'ON' : 'OFF'}</span>
             </button>
           </div>
         </header>
@@ -742,7 +775,7 @@ export default function App() {
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto min-h-0 relative px-4 md:px-12 py-6 space-y-6"
+          className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative px-4 md:px-12 py-6 space-y-6 max-w-full"
           style={{ willChange: 'scroll-position' }}
         >
           {activeSession.messages.length === 0 ? (
@@ -794,7 +827,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="max-w-6xl mx-auto space-y-6">
+            <div className="max-w-6xl mx-auto space-y-6 w-full overflow-x-hidden">
               {isLoadingMore && (
                 <div className="text-center py-2">
                   <span className="inline-block px-3 py-1 bg-white/85 backdrop-blur-md rounded-full shadow-sm text-xs font-medium text-slate-500 animate-pulse">
@@ -807,14 +840,14 @@ export default function App() {
                 const isEditing = editingIndex === realIndex;
 
                 return (
-                  <div key={realIndex} className={`flex gap-3 md:gap-4 group ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div key={realIndex} className={`flex gap-3 md:gap-4 group w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
                       <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0 mt-1 shadow-md shadow-blue-500/30">
                         C
                       </div>
                     )}
                     <div
-                      className={`max-w-[92%] md:max-w-5xl px-6 py-4 rounded-2xl text-sm shadow-md relative ${
+                      className={`max-w-[92%] md:max-w-5xl px-6 py-4 rounded-2xl text-sm shadow-md relative break-words overflow-hidden ${
                         msg.role === 'user'
                           ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none shadow-blue-500/25'
                           : 'bg-white/95 backdrop-blur-xl text-slate-800 border border-white rounded-bl-none shadow-slate-200/60 w-full'
@@ -852,7 +885,7 @@ export default function App() {
                       ) : msg.imageUrl ? (
                         <div className="space-y-3">
                           <p className="font-medium text-slate-800">{parseInlineFormatting(msg.content)}</p>
-                          <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-900 inline-block">
+                          <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-900 inline-block max-w-full">
                             <img src={msg.imageUrl} alt="Generated AI Artwork" className="max-h-[450px] w-auto object-contain mx-auto" />
                           </div>
                           <div className="flex items-center gap-2 pt-1">
