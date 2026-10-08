@@ -464,7 +464,7 @@ export default function App() {
 
   if (isAboutPage) {
     return (
-      <div className="fixed inset-0 w-screen h-screen overflow-y-auto bg-slate-950 text-white font-sans selection:bg-blue-500 selection:text-white">
+      <div className="min-h-screen w-full bg-slate-950 text-white font-sans selection:bg-blue-500 selection:text-white overflow-y-auto relative">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[140px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] rounded-full bg-indigo-600/20 blur-[140px] pointer-events-none" />
 
@@ -510,7 +510,7 @@ export default function App() {
           </div>
         </section>
 
-        <footer className="border-t border-slate-800 py-8 text-center text-xs text-slate-500 font-medium">
+        <footer className="border-t border-slate-800 py-8 text-center text-xs text-slate-500 font-medium relative z-10">
           CORON – One AI. Every Task • Powered by Autonomous Neural Engine
         </footer>
       </div>
