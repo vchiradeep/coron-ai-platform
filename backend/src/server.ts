@@ -12,8 +12,17 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Explicit CORS configuration to allow your Vercel frontend and local development
+app.use(cors({
+  origin: [
+    'https://coron-ai.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Increased payload limits to 50mb to allow image & media base64 uploads without errors
 app.use(express.json({ limit: '50mb' }));
