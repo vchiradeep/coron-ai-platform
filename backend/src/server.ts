@@ -3,8 +3,6 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import admin from 'firebase-admin';
-import fs from 'fs';
-import path from 'path';
 import chatRouter from './routes/chat';
 import ttsRoutes from './routes/tts';
 import authRouter from './routes/auth';
@@ -21,34 +19,23 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Initialize Firebase Admin SDK with Render's secret mount path first
-const possibleKeyPaths = [
-  '/etc/secrets/serviceAccountKey.json',
-  process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
-  path.resolve(process.cwd(), 'serviceAccountKey.json'),
-  path.resolve(__dirname, '../serviceAccountKey.json'),
-  path.resolve(__dirname, 'serviceAccountKey.json'),
-  './serviceAccountKey.json',
-  '../serviceAccountKey.json'
-].filter(Boolean) as string[];
+// Initialize Firebase Admin SDK cleanly via Environment Variable JSON string
+if (!admin.apps.length) {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
-let resolvedKeyPath: string | null = null;
-for (const p of possibleKeyPaths) {
-  const resolved = path.resolve(p);
-  if (fs.existsSync(resolved)) {
-    resolvedKeyPath = resolved;
-    break;
+  if (serviceAccountJson) {
+    try {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      console.log('Firebase Admin initialized successfully via environment variable.');
+    } catch (error) {
+      console.error('CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', error);
+    }
+  } else {
+    console.error('CRITICAL ERROR: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is missing!');
   }
-}
-
-if (resolvedKeyPath) {
-  const serviceAccount = JSON.parse(fs.readFileSync(resolvedKeyPath, 'utf8'));
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log(`Firebase Admin initialized successfully using key at: ${resolvedKeyPath}`);
-} else {
-  console.error('CRITICAL ERROR: Firebase service account key not found in any expected path!');
 }
 
 const db = admin.firestore();
