@@ -21,8 +21,9 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Initialize Firebase Admin SDK with robust multi-path fallback for Render & Local
+// Initialize Firebase Admin SDK with Render's secret mount path first
 const possibleKeyPaths = [
+  '/etc/secrets/serviceAccountKey.json',
   process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
   path.resolve(process.cwd(), 'serviceAccountKey.json'),
   path.resolve(__dirname, '../serviceAccountKey.json'),
