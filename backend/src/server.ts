@@ -16,6 +16,7 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'https://coron-ai.vercel.app',
+    /^https:\/\/coron-ai.*\.vercel\.app$/, // Allows any Vercel preview URLs
     'http://localhost:5173',
     'http://localhost:3000'
   ],
